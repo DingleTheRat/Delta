@@ -1,0 +1,31 @@
+name: build
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        loader: [fabric, neoforge]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: build ${{ matrix.loader }}
+        run: ./gradlew :${{ matrix.loader }}:build
+      - name: capture build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.loader }}-artifacts
+          path: ${{ matrix.loader }}/build/libs/
