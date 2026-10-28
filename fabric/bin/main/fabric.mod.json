@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "deltarinth",
+  "version": "${version}",
+  "name": "Delta",
+  "description": "",
+  "authors": ["DingleTheRat", "UsUsStudios"],
+  "contact": {
+    "sources": "https://github.com/DingleTheRat/Delta"
+  },
+  "license": "GPL-3.0",
+  "icon": "assets/deltarinth/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["net.dingletherat.deltarinth.fabric.DeltaFabric"],
+    "client": ["net.dingletherat.deltarinth.fabric.client.DeltaFabricClient"]
+  },
+  "mixins": ["deltarinth.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "architectury": ">=22.0.3",
+    "fabric-api": "*"
+  }
+}

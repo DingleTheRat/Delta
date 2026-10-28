@@ -1,15 +1,14 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
 #issueTrackerURL = ""
-license = "Insert License Here"
+license = "GPL-3.0"
 
 [[mods]]
 modId = "deltarinth"
 version = "${version}"
 displayName = "Delta"
-authors = "Me!"
+authors = "DingleTheRat, UsUsStudios"
 description = '''
-This is an example description! Tell everyone what your mod is about!
 '''
 #logoFile = ""
 
