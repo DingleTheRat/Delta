@@ -1,0 +1,20 @@
+{
+  "coordinate_scale": 1.0,
+  "has_skylight": true,
+  "has_ceiling": true,
+  "has_ender_dragon_fight": false,
+  "ambient_light": 0.25,
+  "monster_spawn_block_light_limit": 0,
+  "monster_spawn_light_level": 0,
+  "logical_height": 256,
+  "min_y": 0,
+  "height": 256,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "skybox": "none",
+  "attributes": {
+    "minecraft:gameplay/sky_light_level": 3.0,
+    "minecraft:visual/sky_light_factor": 0.2,
+    "minecraft:visual/sky_color": "#212630",
+    "minecraft:visual/fog_color": "#0e0f11"
+  }
+}
