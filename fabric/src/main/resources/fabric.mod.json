@@ -13,7 +13,8 @@
   "environment": "*",
   "entrypoints": {
     "main": ["net.dingletherat.deltarinth.fabric.DeltaFabric"],
-    "client": ["net.dingletherat.deltarinth.fabric.client.DeltaFabricClient"]
+    "client": ["net.dingletherat.deltarinth.fabric.client.DeltaFabricClient"],
+    "fabric-datagen": ["net.dingletherat.deltarinth.fabric.DeltaDataGeneration"]
   },
   "mixins": ["deltarinth.mixins.json"],
   "depends": {

@@ -14,6 +14,8 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.monster.Giant;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
@@ -25,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.Noises;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -40,29 +43,18 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
 
     static PositionalRandomFactory randomFactory;
 
-    private float sinPeriod, sinMagnitude;
-
     public static final MapCodec<LabyrinthChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
-                BiomeSource.CODEC.fieldOf("biome_source").forGetter(LabyrinthChunkGenerator::getBiomeSource),
-                Codec.FLOAT.fieldOf("sin_period").forGetter(LabyrinthChunkGenerator::getSinPeriod),
-                Codec.FLOAT.fieldOf("sin_magnitude").forGetter(LabyrinthChunkGenerator::getSinMagnitude)
+                BiomeSource.CODEC.fieldOf("biome_source").forGetter(LabyrinthChunkGenerator::getBiomeSource)
                 ).apply(instance, LabyrinthChunkGenerator::new));
 
-    public LabyrinthChunkGenerator(BiomeSource biomeSource, float sinPeriod, float sinMagnitude) {
+    public LabyrinthChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
-        this.sinPeriod = sinPeriod;
-        this.sinMagnitude = sinMagnitude;
     }
 
     @Override
     public void addDebugScreenInfo(List<String> result, RandomState randomState, BlockPos feetPos,
             SamplerContext samplerContext) {}
-
-    private int getHeightAt(RandomState randomState, int x, int z) {
-        Noise noise = randomState.getOrCreateNoise(Noises.GRAVEL);
-        return noise.get(x*5, z*5) > 0.25 ? 0 : 0;
-    }
 
     @Override
     public CompletableFuture<ChunkAccess> buildTerrain(ChunkAccess chunk, Blender blender, RandomState randomState,
@@ -153,7 +145,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         int minY = heightAccessor.getMinY();
         int maxY = minY + heightAccessor.getHeight();
 
-        int height = getHeightAt(randomState, x, z);
+        int height = WALL_HEIGHT + 1;
         BlockState[] column = new BlockState[maxY - minY];
         for (int y = minY; y < maxY; y++) {
             column[y - minY] =
@@ -168,7 +160,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
 
     @Override
     public int getBaseHeight(int x, int z, Types type, LevelHeightAccessor heightAccessor, RandomState randomState) {
-        return (int) (Math.sin(x * sinPeriod) * sinMagnitude + sinMagnitude + 10);
+        return WALL_HEIGHT + 1;
     }
 
     @Override
@@ -187,15 +179,5 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public void spawnOriginalMobs(WorldGenRegion worldGenRegion) {
-        return;
-    }
-
-    public float getSinPeriod() {
-        return sinPeriod;
-    }
-
-    public float getSinMagnitude() {
-        return sinMagnitude;
-    }
+    public void spawnOriginalMobs(WorldGenRegion worldGenRegion) {}
 }

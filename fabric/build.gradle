@@ -7,6 +7,14 @@ architectury {
     fabric()
 }
 
+fabricApi {
+    configureDataGeneration {
+        client = true
+        // Write into common so both loaders ship the generated resources.
+        outputDirectory = project(':common').file('src/main/generated')
+    }
+}
+
 configurations {
     common {
         canBeResolved = true

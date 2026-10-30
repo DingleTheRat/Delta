@@ -4,8 +4,8 @@
   "has_ceiling": true,
   "has_ender_dragon_fight": false,
   "ambient_light": 0.25,
-  "monster_spawn_block_light_limit": 0,
-  "monster_spawn_light_level": 0,
+  "monster_spawn_block_light_limit": 15,
+  "monster_spawn_light_level": 15,
   "logical_height": 256,
   "min_y": 0,
   "height": 256,
@@ -15,6 +15,21 @@
     "minecraft:gameplay/sky_light_level": 3.0,
     "minecraft:visual/sky_light_factor": 0.2,
     "minecraft:visual/sky_color": "#212630",
-    "minecraft:visual/fog_color": "#0e0f11"
+    "minecraft:visual/fog_color": "#0e0f11",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "spawns_by_category": {
+        "monster": [
+          {
+            "type": "minecraft:giant",
+            "count": {
+              "type": "minecraft:constant",
+              "value": 100
+            },
+            "weight": 100
+          }
+        ]
+      },
+      "spawn_costs": {}
+    }
   }
 }
