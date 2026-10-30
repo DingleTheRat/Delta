@@ -1,7 +1,6 @@
 package net.dingletherat.deltarinth.world;
 
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.Stack;
 import net.minecraft.util.RandomSource;
 
@@ -10,9 +9,7 @@ import net.minecraft.util.RandomSource;
  */
 public class Maze {
 
-    public static void main(String[] args) {
-        System.out.println(new Maze(10, 4, 3, 3, null).toString());
-    }
+    protected record Settings(int cellsX, int cellsZ, int corridor, int wall, int turn_probability) {}
 
     // represents an integer ordered pair of x, z
     private class Pair {
@@ -34,7 +31,10 @@ public class Maze {
     }
 
     private boolean[][] map;  // x, then z; true = no wall
-    private RandomSource randomSource;
+    private RandomSource xRandomSource;      // source for generating position of hole in top edge
+    private RandomSource zRandomSource;      // source for generating position of hole in left edge
+    private RandomSource xEdgeRandomSource;  // source for generating position of hole in bottom edge
+    private RandomSource zEdgeRandomSource;  // source for generating position of hole in right edge
 
     private int cellsX;    // how many maze cells there are across the x-axis
     private int cellsZ;    // how many maze cells there are across the z-axis
@@ -43,26 +43,43 @@ public class Maze {
     private int corridor;  // how many blocks wide is each corridor
     private int wall;      // how many blocks wide is each wall
     private int shift;     // how many blocks to move over every time; corridor + wall
+    private int turn_probability; // out of 100; if less than, then turn
+
+    private int next = 0;   // the index of the next neighbour to go to
 
     Stack<Pair> stack = new Stack<>();
 
-    public Maze(int cellsX, int cellsZ, int corridor, int wall, RandomSource randomSource) {
-        this.cellsX = cellsX;
-        this.cellsZ = cellsZ;
-        this.corridor = corridor;
-        this.wall = wall;
+    public Maze(Settings settings, RandomSource xRandomSource, RandomSource zRandomSource, RandomSource xEdgeRandomSource, RandomSource zEdgeRandomSource) {
+        this.cellsX = settings.cellsX;
+        this.cellsZ = settings.cellsZ;
+        this.corridor = settings.corridor;
+        this.wall = settings.wall;
         this.shift = corridor + wall;
+        this.turn_probability = settings.turn_probability;
 
         this.width = shift * cellsX + wall;   // +wall to include both outer walls
         this.height = shift * cellsZ + wall;  // +wall to include both outer walls
 
         this.map = new boolean[width][height];
-        this.randomSource = randomSource;
+        this.xRandomSource = xRandomSource;
+        this.zRandomSource = zRandomSource;
+        this.xEdgeRandomSource = xEdgeRandomSource;
+        this.zEdgeRandomSource = zEdgeRandomSource;
 
         buildMaze();
     }
 
     private void buildMaze() {
+        // draw the openings in the edges
+        Pair edgeX1 = new Pair(xRandomSource.nextInt(cellsX) * shift + wall, 0);
+        Pair edgeZ1 = new Pair(0, zRandomSource.nextInt(cellsZ) * shift + wall);
+        Pair edgeX2 = new Pair(xEdgeRandomSource.nextInt(cellsX) * shift + wall, height - wall);
+        Pair edgeZ2 = new Pair(height - wall, zEdgeRandomSource.nextInt(cellsZ) * shift + wall);
+        drawRect(edgeX1, edgeX1.plus(corridor, wall));
+        drawRect(edgeZ1, edgeZ1.plus(wall, corridor));
+        drawRect(edgeX2, edgeX2.plus(corridor, wall));
+        drawRect(edgeZ2, edgeZ2.plus(wall, corridor));
+
         stack.push(new Pair(wall, wall));  // start at top left
         draw(stack.peek(), stack.peek());
 
@@ -85,7 +102,14 @@ public class Maze {
         if (available(check)) neighbours.add(check);
 
         if (neighbours.size() > 0) {
-            int next = randomSource.nextInt(neighbours.size()); // 0 to size, exclusive
+            if (next >= neighbours.size() || xRandomSource.nextInt(100) < turn_probability) {
+                int old_next = next;
+
+                if (neighbours.size() > 1)
+                    while (next == old_next)
+                        next = xRandomSource.nextInt(neighbours.size());
+                else next = xRandomSource.nextInt(neighbours.size()); // 0 to size, exclusive
+            }
 
             stack.push(neighbours.get(next));
             draw(prev, stack.peek());
@@ -123,6 +147,14 @@ public class Maze {
         }
     }
 
+    private void drawRect(Pair p1, Pair p2) {
+        for (int x = Math.min(p1.x, p2.x); x < Math.max(p1.x, p2.x); x++) {
+            for (int z = Math.min(p1.z, p2.z); z < Math.max(p1.z, p2.z); z++) {
+                map[x][z] = true;
+            }
+        }
+    }
+
     // returns true if the coordinates are on the map and if the value on the map is false
     private boolean available(Pair p) {
         if (p.x < 0 ||
@@ -138,7 +170,14 @@ public class Maze {
     public int getHeight() { return height; }
     public int getCorridor() { return corridor; }
     public int getWall() { return wall; }
-    public boolean getAt(int x, int z) { return map[x][z]; }
+    public boolean getAt(int x, int z) {
+        // return no wall if out of bounds
+        if (x < 0 ||
+            x >= width ||
+            z < 0 ||
+            z >= height) return true;
+        return map[x][z];
+    }
 
     @Override
     public String toString() {

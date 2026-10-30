@@ -26,6 +26,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.levelgen.Noises;
+import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
@@ -33,6 +34,12 @@ import net.minecraft.world.level.levelgen.synth.Noise;
 
 
 public class LabyrinthChunkGenerator extends ChunkGenerator {
+    static final int WALL_HEIGHT = 16;
+    static final int blocksPerMaze = 16 * 6;
+    static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 90);
+
+    static PositionalRandomFactory randomFactory;
+
     private float sinPeriod, sinMagnitude;
 
     public static final MapCodec<LabyrinthChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(instance ->
@@ -55,13 +62,6 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
     private int getHeightAt(RandomState randomState, int x, int z) {
         Noise noise = randomState.getOrCreateNoise(Noises.GRAVEL);
         return noise.get(x*5, z*5) > 0.25 ? 0 : 0;
-        // sine wave
-        //return (int) ((
-        //            Math.sin(x / sinPeriod + 3.2) +
-        //            Math.sin(z / sinPeriod + 4.3)
-        //        ) * sinMagnitude
-        //        + sinMagnitude * 2 + 10
-        //);
     }
 
     @Override
@@ -75,31 +75,72 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         int startX = chunk.getPos().getMinBlockX();
         int startZ = chunk.getPos().getMinBlockZ();
 
-        // Rounded to 1 maze every 3 chunks
-        int blocksPerMaze = 16 * 6;
+        // Rounded to 1 maze every 9 chunks
         int mazeOriginX = Math.floorDiv(startX, blocksPerMaze) * blocksPerMaze;
         int mazeOriginZ = Math.floorDiv(startZ, blocksPerMaze) * blocksPerMaze;
 
         // How much to add to the coordinates to get to the position in the maze
-        int mazeOffX = startX - mazeOriginX;
-        int mazeOffZ = startZ - mazeOriginZ;
+        int mazeOffX = startX - mazeOriginX + 1;
+        int mazeOffZ = startZ - mazeOriginZ + 1;
 
-        RandomSource random = randomState.getOrCreateRandomFactory(Identifier.fromNamespaceAndPath(Delta.MOD_ID, "labyrinth"))
-            .at(new BlockPos(mazeOriginX, 0, mazeOriginZ));
-        Maze maze = new Maze(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, random);
+        if (randomFactory == null) randomFactory = randomState.getOrCreateRandomFactory(Identifier.fromNamespaceAndPath(Delta.MOD_ID, "labyrinth"));
+        RandomSource xRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ));
+        RandomSource zRandom = randomFactory.at(new BlockPos(mazeOriginX, 0, mazeOriginZ + 1));
+        RandomSource xEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ + blocksPerMaze));
+        RandomSource zEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + blocksPerMaze, 0, mazeOriginZ + 1));
+
+        Maze maze = new Maze(settings, xRandom, zRandom, xEdgeRandom, zEdgeRandom);
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                if (!maze.getAt(x + mazeOffX, z + mazeOffZ)) {
-                    // TODO: change to making a wall
-                    pos.set(x, minY + 1, z);
-                    chunk.setBlockState(pos, Blocks.BEDROCK.defaultBlockState());
+                int mazeX = x + mazeOffX;
+                int mazeZ = z + mazeOffZ;
+                int neighbours = 0;
+                if (maze.getAt(mazeX + 1, mazeZ + 1)) neighbours++;
+                if (maze.getAt(mazeX + 1, mazeZ)) neighbours++;
+                if (maze.getAt(mazeX + 1, mazeZ - 1)) neighbours++;
+                if (maze.getAt(mazeX, mazeZ + 1)) neighbours++;
+                if (maze.getAt(mazeX, mazeZ - 1)) neighbours++;
+                if (maze.getAt(mazeX - 1, mazeZ + 1)) neighbours++;
+                if (maze.getAt(mazeX - 1, mazeZ)) neighbours++;
+                if (maze.getAt(mazeX - 1, mazeZ - 1)) neighbours++;
+
+                if (maze.getAt(mazeX, mazeZ)) {
+                    generateFloor(pos, chunk, x, z, neighbours);
+                } else {
+                    generateWall(pos, chunk, x, z, neighbours);
                 }
                 pos.set(x, minY, z);
                 chunk.setBlockState(pos, Blocks.BEDROCK.defaultBlockState());
             }
         }
         return CompletableFuture.completedFuture(chunk);
+    }
+
+    private void generateFloor(BlockPos.MutableBlockPos pos, ChunkAccess chunk, int x, int z, int neighbours) {
+        // neighbours: how many of neighbours in 3x3 around block are floor
+        int minY = chunk.getMinY();
+
+        pos.set(x, minY + 1, z);
+        if (neighbours < 8) {
+            chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
+        } else {
+            chunk.setBlockState(pos, Blocks.QUARTZ_BRICKS.defaultBlockState());
+        }
+    }
+
+    private void generateWall(BlockPos.MutableBlockPos pos, ChunkAccess chunk, int x, int z, int neighbours) {
+        // neighbours: how many of neighbours in 3x3 around block are floor
+        int minY = chunk.getMinY();
+
+        for (int y = minY + 1; y < WALL_HEIGHT + 1; y++) {
+            pos.set(x, y, z);
+            if (neighbours == 5) {
+                chunk.setBlockState(pos, Blocks.QUARTZ_PILLAR.defaultBlockState());
+            } else {
+                chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
+            }
+        }
     }
 
     @Override
