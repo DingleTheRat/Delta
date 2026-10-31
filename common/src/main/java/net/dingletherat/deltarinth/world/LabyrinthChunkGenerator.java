@@ -33,7 +33,7 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 
 public class LabyrinthChunkGenerator extends ChunkGenerator {
 
-    Registry<LabyrinthStructure> structures;
+    List<LabyrinthStructure> structures;
 
     static final int WALL_HEIGHT = 16;
     static final int blocksPerMaze = 16 * 6;
@@ -59,13 +59,14 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
             StructureManager structureManager, BiomeManager biomeManager, @Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
 
         if (carverBiomeRegion != null) {
-            Registry<LabyrinthStructure> registry =
-                    carverBiomeRegion.getLevel()
+            Registry<LabyrinthStructure> registry = carverBiomeRegion.getLevel()
                             .registryAccess()
                             .lookupOrThrow(DeltaRegistries.LABYRINTH_STRUCTURE);
-            Delta.LOGGER.info(registry.getValue(Identifier.fromNamespaceAndPath(Delta.MOD_ID, "test_struct")).toString());
+            structures = registry.stream().toList();
         } else {
-            Delta.LOGGER.error("no carverBiomeRegion");
+            if (structures == null) {
+                throw new IllegalStateException("Labyrinth structure registry not accessible");
+            }
         }
 
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
