@@ -4,18 +4,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import org.jspecify.annotations.Nullable;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.dingletherat.deltarinth.Delta;
+import net.dingletherat.deltarinth.registry.DeltaRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.monster.Giant;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
@@ -27,16 +25,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
-import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.Noises;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
-import net.minecraft.world.level.levelgen.synth.Noise;
 
 
 public class LabyrinthChunkGenerator extends ChunkGenerator {
+
+    Registry<LabyrinthStructure> structures;
+
     static final int WALL_HEIGHT = 16;
     static final int blocksPerMaze = 16 * 6;
     static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 90);
@@ -59,6 +57,17 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
     @Override
     public CompletableFuture<ChunkAccess> buildTerrain(ChunkAccess chunk, Blender blender, RandomState randomState,
             StructureManager structureManager, BiomeManager biomeManager, @Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
+
+        if (carverBiomeRegion != null) {
+            Registry<LabyrinthStructure> registry =
+                    carverBiomeRegion.getLevel()
+                            .registryAccess()
+                            .lookupOrThrow(DeltaRegistries.LABYRINTH_STRUCTURE);
+            Delta.LOGGER.info(registry.getValue(Identifier.fromNamespaceAndPath(Delta.MOD_ID, "test_struct")).toString());
+        } else {
+            Delta.LOGGER.error("no carverBiomeRegion");
+        }
+
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         int minY = chunk.getMinY();
