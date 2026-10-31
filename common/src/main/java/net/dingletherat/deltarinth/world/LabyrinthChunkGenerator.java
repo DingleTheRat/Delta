@@ -85,7 +85,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         int mazeOffX = startX - mazeOriginX + 1;
         int mazeOffZ = startZ - mazeOriginZ + 1;
 
-        if (randomFactory == null) randomFactory = randomState.getOrCreateRandomFactory(Identifier.fromNamespaceAndPath(Delta.MOD_ID, "labyrinth"));
+        if (randomFactory == null) randomFactory = randomState.getOrCreateRandomFactory(Delta.id("labyrinth"));
         RandomSource xRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ));
         RandomSource zRandom = randomFactory.at(new BlockPos(mazeOriginX, 0, mazeOriginZ + 1));
         RandomSource xEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ + blocksPerMaze));

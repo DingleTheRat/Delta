@@ -12,9 +12,4 @@ public class DeltaConsumeEffects {
 
     public static final RegistrySupplier<ConsumeEffect.Type<EitherStatusEffectConsumeEffect>> EITHER_EFFECT = CONSUME_EFFECT_TYPES.register("either_effect",
         () -> new ConsumeEffect.Type<>(EitherStatusEffectConsumeEffect.CODEC, EitherStatusEffectConsumeEffect.STREAM_CODEC));
-
-    public static void initialize() {
-        Delta.LOGGER.info("Initializing consume effects for " + Delta.MOD_ID);
-        CONSUME_EFFECT_TYPES.register();
-    }
 }

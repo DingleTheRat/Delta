@@ -3,6 +3,7 @@ package net.dingletherat.deltarinth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.dingletherat.deltarinth.registry.*;
+import net.minecraft.resources.Identifier;
 
 public final class Delta {
     public static final String MOD_ID = "deltarinth";
@@ -16,5 +17,9 @@ public final class Delta {
         // Write common init code here.
         LOGGER.info("Initializing " + MOD_ID);
         DeltaRegistries.register();
+    }
+
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 }

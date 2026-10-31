@@ -18,9 +18,4 @@ public class DeltaDataComponents {
     public static <T> RegistrySupplier<DataComponentType<T>> registerDataComponent(String name, UnaryOperator<DataComponentType.Builder<T>> builderOperator) {
         return DATA_COMPONENTS.register(name, () -> builderOperator.apply(DataComponentType.builder()).build());
     }
-
-    public static void initialize() {
-        Delta.LOGGER.info("Initializing data components for " + Delta.MOD_ID);
-        DATA_COMPONENTS.register();
-    }
 }
