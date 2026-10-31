@@ -8,7 +8,6 @@ import net.dingletherat.deltarinth.world.LabyrinthChunkGenerator;
 import net.dingletherat.deltarinth.world.LabyrinthStructure;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 

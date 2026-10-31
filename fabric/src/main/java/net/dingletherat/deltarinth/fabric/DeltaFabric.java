@@ -3,7 +3,7 @@ package net.dingletherat.deltarinth.fabric;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
 import net.dingletherat.deltarinth.Delta;
-import net.dingletherat.deltarinth.registry.DeltaRegistries;
+import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
 import net.dingletherat.deltarinth.world.LabyrinthStructure;
 
 public final class DeltaFabric implements ModInitializer {
@@ -14,14 +14,14 @@ public final class DeltaFabric implements ModInitializer {
         // Proceed with mild caution.
 
         DynamicRegistries.register(
-                DeltaRegistries.LABYRINTH_STRUCTURE,
+                DeltaChunkGenerators.LABYRINTH_STRUCTURE,
                 LabyrinthStructure.CODEC
         );
 
         System.out.println(
             DynamicRegistries.getWorldRegistries().stream()
                 .filter(data -> data.key().equals(
-                    DeltaRegistries.LABYRINTH_STRUCTURE
+                    DeltaChunkGenerators.LABYRINTH_STRUCTURE
                 ))
                 .toList()
         );

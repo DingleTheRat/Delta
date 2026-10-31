@@ -7,11 +7,10 @@ import org.jspecify.annotations.Nullable;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dingletherat.deltarinth.Delta;
-import net.dingletherat.deltarinth.registry.DeltaRegistries;
+import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -61,7 +60,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         if (carverBiomeRegion != null) {
             Registry<LabyrinthStructure> registry = carverBiomeRegion.getLevel()
                             .registryAccess()
-                            .lookupOrThrow(DeltaRegistries.LABYRINTH_STRUCTURE);
+                            .lookupOrThrow(DeltaChunkGenerators.LABYRINTH_STRUCTURE);
             structures = registry.stream().toList();
         } else {
             if (structures == null) {
