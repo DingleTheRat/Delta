@@ -11,3 +11,9 @@ dependencies {
     // Architectury API. This is optional, and you can comment it out if you don't need it.
     implementation "dev.architectury:architectury:$rootProject.architectury_api_version"
 }
+
+// Resources produced by `:fabric:runDatagen` (shipped by both loaders).
+sourceSets.main.resources {
+    srcDir 'src/main/generated'
+    exclude '.cache/**'
+}

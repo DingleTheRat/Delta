@@ -3,6 +3,10 @@ package net.dingletherat.deltarinth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.dingletherat.deltarinth.registry.DeltaBlocks;
+import net.dingletherat.deltarinth.registry.DeltaConsumeEffects;
+import net.dingletherat.deltarinth.registry.DeltaDataComponents;
+import net.dingletherat.deltarinth.registry.DeltaItems;
 import net.dingletherat.deltarinth.world.LabyrinthChunkGenerator;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -17,8 +21,11 @@ public final class Delta {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static void init() {
-        // Write common init code here.
-        LOGGER.info("Hello, World!");
+        LOGGER.info("Initializing " + MOD_ID);
+        DeltaConsumeEffects.initialize();
+        DeltaDataComponents.initialize();
+        DeltaItems.initialize();
+        DeltaBlocks.initialize();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR, Identifier.fromNamespaceAndPath(MOD_ID, "labyrinth"), LabyrinthChunkGenerator.CODEC);
     }

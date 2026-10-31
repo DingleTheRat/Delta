@@ -14,7 +14,7 @@
   "entrypoints": {
     "main": ["net.dingletherat.deltarinth.fabric.DeltaFabric"],
     "client": ["net.dingletherat.deltarinth.fabric.client.DeltaFabricClient"],
-    "fabric-datagen": ["net.dingletherat.deltarinth.fabric.DeltaDataGeneration"]
+    "fabric-datagen": ["net.dingletherat.deltarinth.fabric.datagen.DeltaDataGeneration"]
   },
   "mixins": ["deltarinth.mixins.json"],
   "depends": {
