@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "deltarinth:item/dried_blood_bottle"
+  }
+}

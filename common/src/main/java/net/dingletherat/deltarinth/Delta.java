@@ -2,7 +2,7 @@ package net.dingletherat.deltarinth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.dingletherat.deltarinth.registry.DeltaRegistries;
+import net.dingletherat.deltarinth.registry.*;
 
 public final class Delta {
     public static final String MOD_ID = "deltarinth";
@@ -14,7 +14,7 @@ public final class Delta {
 
     public static void init() {
         // Write common init code here.
-        LOGGER.info("Deltarinth loading");
+        LOGGER.info("Initializing " + MOD_ID);
         DeltaRegistries.register();
     }
 }

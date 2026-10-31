@@ -32,6 +32,11 @@ public final class DeltaRegistries {
         });
 
     public static void register() {
+        DeltaConsumeEffects.initialize();
+        DeltaDataComponents.initialize();
+        DeltaItems.initialize();
+        DeltaBlocks.initialize();
+
         CHUNK_GENERATORS.register();
     }
 }
