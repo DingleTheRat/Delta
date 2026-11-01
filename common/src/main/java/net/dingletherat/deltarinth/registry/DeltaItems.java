@@ -21,21 +21,15 @@ public class DeltaItems {
      * The drier the blood, the bigger chance of withering (view stats in DeltaConsumables)
      * Ignore golden blood for now (I'm too lazy to make a texture for it lol)
      */
-    public static final RegistrySupplier<BloodBottle> FRESH_BLOOD_BOTTLE    = registerItem("fresh_blood_bottle",    DeltaTabs.DELTA_TAB.getKey(), (properties) -> new BloodBottle(properties.stacksTo(16).food(DeltaFoods.BLOOD, DeltaConsumables.FRESH_BLOOD).usingConvertsTo(Items.GLASS_BOTTLE)));
-    public static final RegistrySupplier<BloodBottle> BLOOD_BOTTLE          = registerItem("blood_bottle",          DeltaTabs.DELTA_TAB.getKey(), (properties) -> new BloodBottle(properties.stacksTo(16).food(DeltaFoods.BLOOD, DeltaConsumables.BLOOD).usingConvertsTo(Items.GLASS_BOTTLE)));
-    public static final RegistrySupplier<BloodBottle> DRIED_BLOOD_BOTTLE    = registerItem("dried_blood_bottle",    DeltaTabs.DELTA_TAB.getKey(), (properties) -> new BloodBottle(properties.stacksTo(16).food(DeltaFoods.BLOOD, DeltaConsumables.DRIED_BLOOD).usingConvertsTo(Items.GLASS_BOTTLE)));
+    public static final RegistrySupplier<BloodBottle> FRESH_BLOOD_BOTTLE = registerItem("fresh_blood_bottle", (properties) -> new BloodBottle(properties.food(DeltaFoods.BLOOD, DeltaConsumables.FRESH_BLOOD)));
+    public static final RegistrySupplier<BloodBottle> BLOOD_BOTTLE = registerItem("blood_bottle", (properties) -> new BloodBottle(properties.food(DeltaFoods.BLOOD, DeltaConsumables.BLOOD)));
+    public static final RegistrySupplier<BloodBottle> DRIED_BLOOD_BOTTLE = registerItem("dried_blood_bottle", (properties) -> new BloodBottle(properties.food(DeltaFoods.BLOOD, DeltaConsumables.DRIED_BLOOD)));
     //public static final RegistrySupplier<Item> GOLDEN_BLOOD_BOTTLE = registerItem("golden_blood_bottle", CreativeModeTabs.FOOD_AND_DRINKS, (properties) -> new Item(properties.stacksTo(16).food(DeltaFoods.GOLDEN_BLOOD, DeltaConsumables.GOLDEN_BLOOD).usingConvertsTo(Items.GLASS_BOTTLE)));
 
-    public static <T extends Item> RegistrySupplier<T> registerItem(String name, ResourceKey<CreativeModeTab> tab, Function<Item.Properties, T> function) {
-        return ITEMS.register(name, () -> {
-            ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Delta.id(name));
-            return function.apply(new Item.Properties().setId(key).arch$tab(tab));
-        });
-    }
     public static <T extends Item> RegistrySupplier<T> registerItem(String name,  Function<Item.Properties, T> function) {
         return ITEMS.register(name, () -> {
             ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Delta.id(name));
-            return function.apply(new Item.Properties().setId(key).arch$tab(CreativeModeTabs.SEARCH));
+            return function.apply(new Item.Properties().setId(key).arch$tab(DeltaTabs.DELTA_TAB));
         });
     }
 }

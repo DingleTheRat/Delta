@@ -10,8 +10,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class BloodBottle extends Item {
     // Stats
@@ -21,7 +23,7 @@ public class BloodBottle extends Item {
     public static final int BAR_COLOR_BLOOD = 0x8B0000; // dark red
 
     public BloodBottle(Properties properties) {
-        super(properties);
+        super(properties.stacksTo(16).usingConvertsTo(Items.GLASS_BOTTLE).arch$tab(CreativeModeTabs.FOOD_AND_DRINKS));
     }
 
     @Override
