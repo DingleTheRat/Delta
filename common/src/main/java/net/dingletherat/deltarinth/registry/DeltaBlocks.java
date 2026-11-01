@@ -8,7 +8,6 @@ import net.dingletherat.deltarinth.Delta;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
@@ -29,6 +28,6 @@ public class DeltaBlocks {
     }
 
     public static RegistrySupplier<BlockItem> registerBlockItem(String name, Supplier<? extends Block> block) {
-        return DeltaItems.registerItem(name, CreativeModeTabs.BUILDING_BLOCKS, properties -> new BlockItem(block.get(), properties.useBlockDescriptionPrefix()));
+        return DeltaItems.registerItem(name, properties -> new BlockItem(block.get(), properties.useBlockDescriptionPrefix()));
     }
 }

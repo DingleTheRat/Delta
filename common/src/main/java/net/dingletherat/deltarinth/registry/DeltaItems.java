@@ -7,10 +7,7 @@ import net.dingletherat.deltarinth.Delta;
 import net.dingletherat.deltarinth.item.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 
 public class DeltaItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Delta.MOD_ID, Registries.ITEM);
