@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.Identifier;
 
 public abstract class LabyrinthStructuresProvider implements DataProvider {
 
@@ -26,9 +27,14 @@ public abstract class LabyrinthStructuresProvider implements DataProvider {
          * @param width how wide the structure rectangle should be - in how many corridors
          * @param height how wide the structure rectangle should be - in how many corridors
          **/
-        public void generateSimple(String name, double exits, int width, int height) {
+        public void generateSimple(String modid, String name, double exits, int width, int height, int offx, int offz) {
             JsonObject json = new JsonObject();
             json.addProperty("stack_chance", exits);
+            json.addProperty("location", Identifier.fromNamespaceAndPath(modid, name).toString());
+            JsonObject offset = new JsonObject();
+            offset.addProperty("x", offx);
+            offset.addProperty("z", offz);
+            json.add("offset", offset);
 
             JsonArray cells = new JsonArray();
             for (int x = 0; x < width; x++) {

@@ -3,11 +3,8 @@ package net.dingletherat.deltarinth.world;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import net.dingletherat.deltarinth.Delta;
 import net.minecraft.util.RandomSource;
 
 /**
@@ -42,6 +39,18 @@ public class Maze {
             return new Pair(this.x * co, this.z * co);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (!(obj instanceof Pair other)) return false;
+            return x == other.x && z == other.z;
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(x, z);
+        }
+
         int x() { return x; }
         int z() { return z; }
 
@@ -70,7 +79,9 @@ public class Maze {
 
     private int next = 0;   // the index of the next neighbour to go to
 
-    Stack<Pair> stack = new Stack<>();
+    private Stack<Pair> stack = new Stack<>();
+    private List<LabyrinthStructure> placedStructures = new ArrayList<>();
+    private List<Pair> placedStructurePositions = new ArrayList<>();
 
     public Maze(Settings settings, List<LabyrinthStructure> structures, RandomSource xRandomSource, RandomSource zRandomSource, RandomSource xEdgeRandomSource, RandomSource zEdgeRandomSource) {
         this.cellsX = settings.cellsX;
@@ -135,6 +146,8 @@ public class Maze {
             }
 
             if (valid) {
+                placedStructures.add(structure);
+                placedStructurePositions.add(prev);
                 Pair real = prev;
                 for (Pair p : structure.cells()) {
                     real = p.times(shift).plus(prev);
@@ -242,6 +255,8 @@ public class Maze {
     public int getHeight() { return height; }
     public int getCorridor() { return corridor; }
     public int getWall() { return wall; }
+    public List<LabyrinthStructure> getPlacedStructures() { return placedStructures; }
+    public List<Pair> getPlacedStructurePositions() { return placedStructurePositions; }
     public boolean getAt(int x, int z) {
         // return no wall if out of bounds
         if (x < 0 ||

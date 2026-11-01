@@ -1,5 +1,6 @@
 package net.dingletherat.deltarinth.fabric.datagen;
 
+import net.dingletherat.deltarinth.Delta;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 
 public class DeltaLabyrinthStructuresProvider extends LabyrinthStructuresProvider {
@@ -9,9 +10,9 @@ public class DeltaLabyrinthStructuresProvider extends LabyrinthStructuresProvide
 
     @Override
     void generateStructures(LabyrinthStructureGenerators generators) {
-        generators.generateSimple("test1", 0.25, 2, 2);
-        generators.generateSimple("test2", 0.25, 3, 3);
-        generators.generateSimple("test3", 0.25, 4, 5);
-        generators.generateSimple("test4", 0.25, 6, 6);
+        generators.generateSimple(Delta.MOD_ID, "tall_tower", 
+                0.25,
+                2, 2,
+                1, 1);
     }
 }

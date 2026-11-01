@@ -1,6 +1,9 @@
 package net.dingletherat.deltarinth.world;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import org.jspecify.annotations.Nullable;
@@ -11,14 +14,19 @@ import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -28,17 +36,21 @@ import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
-
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
 public class LabyrinthChunkGenerator extends ChunkGenerator {
 
     List<LabyrinthStructure> structures;
+    Map<Maze.Pair, Maze> chunkToMaze = new HashMap<>();
+    PositionalRandomFactory randomFactory;
 
     static final int WALL_HEIGHT = 16;
     static final int blocksPerMaze = 16 * 9;
     static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 0.80, 0.10);
 
-    static PositionalRandomFactory randomFactory;
 
     public static final MapCodec<LabyrinthChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
@@ -58,7 +70,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
             StructureManager structureManager, BiomeManager biomeManager, @Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
 
         if (carverBiomeRegion != null) {
-            Registry<LabyrinthStructure> registry = carverBiomeRegion.getLevel()
+            Registry<LabyrinthStructure> registry = carverBiomeRegion
                             .registryAccess()
                             .lookupOrThrow(DeltaChunkGenerators.LABYRINTH_STRUCTURE);
             structures = registry.stream().toList();
@@ -91,6 +103,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         RandomSource zEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + blocksPerMaze, 0, mazeOriginZ + 1));
 
         Maze maze = new Maze(settings, structures, xRandom, zRandom, xEdgeRandom, zEdgeRandom);
+        chunkToMaze.put(new Maze.Pair(mazeOriginX, mazeOriginZ), maze);
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -115,6 +128,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(pos, Blocks.BEDROCK.defaultBlockState());
             }
         }
+
         return CompletableFuture.completedFuture(chunk);
     }
 
@@ -141,6 +155,52 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
             } else {
                 chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
             }
+        }
+    }
+
+    @Override
+    public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk,
+                                     StructureManager structureManager) {
+        super.applyBiomeDecoration(level, chunk, structureManager); // or skip if you want no vanilla features
+
+        ChunkPos cp = chunk.getPos();
+        int chunkMinX = cp.getMinBlockX();
+        int chunkMinZ = cp.getMinBlockZ();
+
+        int mazeOriginX = Math.floorDiv(chunkMinX, blocksPerMaze) * blocksPerMaze;
+        int mazeOriginZ = Math.floorDiv(chunkMinZ, blocksPerMaze) * blocksPerMaze;
+
+        // Re-create the maze deterministically from its origin (see note below about caching)
+        Maze maze = chunkToMaze.get(new Maze.Pair(mazeOriginX, mazeOriginZ));
+
+        BoundingBox chunkBox = new BoundingBox(
+                chunkMinX, level.getMinY(), chunkMinZ,
+                cp.getMaxBlockX(), level.getMaxY(), cp.getMaxBlockZ());
+
+        StructureTemplateManager templates = level.getLevel().getStructureTemplateManager();
+
+        for (int i = 0; i < maze.getPlacedStructures().size(); i++) {
+            LabyrinthStructure s = maze.getPlacedStructures().get(i);
+            Maze.Pair p = maze.getPlacedStructurePositions().get(i);
+            Optional<StructureTemplate> opt = templates.get(Identifier.parse(s.location())); // ResourceLocation, e.g. deltarinth:labyrinth/room_a
+            if (opt.isEmpty()) continue;
+            StructureTemplate template = opt.get();
+
+            BlockPos origin = new BlockPos(
+                    mazeOriginX + p.x() - 1 + s.offset().x(),
+                    level.getMinY() + 2,           // adjust to sit on your floor
+                    mazeOriginZ + p.z() - 1 + s.offset().z());
+
+            StructurePlaceSettings settings = new StructurePlaceSettings()
+                    .setBoundingBox(chunkBox)      // clips placement to this chunk
+                    .setIgnoreEntities(true);
+
+            // Skip early if it can't touch this chunk
+            BoundingBox templateBox = template.getBoundingBox(settings, origin);
+            if (!templateBox.intersects(chunkBox)) continue;
+
+            RandomSource random = RandomSource.create(Mth.getSeed(origin));
+            template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
         }
     }
 
