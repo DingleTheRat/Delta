@@ -1,11 +1,11 @@
 package net.dingletherat.deltarinth.world;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -14,11 +14,14 @@ import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
@@ -31,6 +34,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -44,7 +48,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 public class LabyrinthChunkGenerator extends ChunkGenerator {
 
     List<LabyrinthStructure> structures;
-    Map<Maze.Pair, Maze> chunkToMaze = new HashMap<>();
+    ConcurrentHashMap<Maze.Pair, Maze> chunkToMaze = new ConcurrentHashMap<>();
     PositionalRandomFactory randomFactory;
 
     static final int WALL_HEIGHT = 16;
@@ -66,29 +70,28 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
             SamplerContext samplerContext) {}
 
     @Override
+    public void createStructures(RegistryAccess registryAccess, ChunkGeneratorStructureState state,
+            StructureManager structureManager, ChunkAccess centerChunk,
+            StructureTemplateManager structureTemplateManager, ResourceKey<Level> level) {
+
+        super.createStructures(registryAccess, state, structureManager, centerChunk, structureTemplateManager, level);
+
+        if (structures == null) {
+            structures = registryAccess.lookupOrThrow(DeltaChunkGenerators.LABYRINTH_STRUCTURE).stream().toList();
+        }
+    }
+
+    @Override
     public CompletableFuture<ChunkAccess> buildTerrain(ChunkAccess chunk, Blender blender, RandomState randomState,
             StructureManager structureManager, BiomeManager biomeManager, @Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
-
-        if (carverBiomeRegion != null) {
-            Registry<LabyrinthStructure> registry = carverBiomeRegion
-                            .registryAccess()
-                            .lookupOrThrow(DeltaChunkGenerators.LABYRINTH_STRUCTURE);
-            structures = registry.stream().toList();
-        } else {
-            if (structures == null) {
-                throw new IllegalStateException("Labyrinth structure registry not accessible");
-            }
-        }
 
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         int minY = chunk.getMinY();
-        int maxY = minY + chunk.getHeight();
 
         int startX = chunk.getPos().getMinBlockX();
         int startZ = chunk.getPos().getMinBlockZ();
 
-        // Rounded to 1 maze every 9 chunks
         int mazeOriginX = Math.floorDiv(startX, blocksPerMaze) * blocksPerMaze;
         int mazeOriginZ = Math.floorDiv(startZ, blocksPerMaze) * blocksPerMaze;
 
@@ -97,13 +100,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         int mazeOffZ = startZ - mazeOriginZ + 1;
 
         if (randomFactory == null) randomFactory = randomState.getOrCreateRandomFactory(Delta.id("labyrinth"));
-        RandomSource xRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ));
-        RandomSource zRandom = randomFactory.at(new BlockPos(mazeOriginX, 0, mazeOriginZ + 1));
-        RandomSource xEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ + blocksPerMaze));
-        RandomSource zEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + blocksPerMaze, 0, mazeOriginZ + 1));
-
-        Maze maze = new Maze(settings, structures, xRandom, zRandom, xEdgeRandom, zEdgeRandom);
-        chunkToMaze.put(new Maze.Pair(mazeOriginX, mazeOriginZ), maze);
+        Maze maze = getMaze(mazeOriginX, mazeOriginZ);
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -170,8 +167,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         int mazeOriginX = Math.floorDiv(chunkMinX, blocksPerMaze) * blocksPerMaze;
         int mazeOriginZ = Math.floorDiv(chunkMinZ, blocksPerMaze) * blocksPerMaze;
 
-        // Re-create the maze deterministically from its origin (see note below about caching)
-        Maze maze = chunkToMaze.get(new Maze.Pair(mazeOriginX, mazeOriginZ));
+        Maze maze = getMaze(mazeOriginX, mazeOriginZ);
 
         BoundingBox chunkBox = new BoundingBox(
                 chunkMinX, level.getMinY(), chunkMinZ,
@@ -202,6 +198,25 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
             RandomSource random = RandomSource.create(Mth.getSeed(origin));
             template.placeInWorld(level, origin, origin, settings, random, Block.UPDATE_CLIENTS);
         }
+    }
+
+    private Maze getMaze(int mazeOriginX, int mazeOriginZ) {
+        if (structures == null) {
+            throw new IllegalStateException("Labyrinth structure registry not accessible");
+        }
+
+        Maze.Pair key = new Maze.Pair(mazeOriginX, mazeOriginZ);
+        if (!chunkToMaze.containsKey(key)) {
+            RandomSource xRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ));
+            RandomSource zRandom = randomFactory.at(new BlockPos(mazeOriginX, 0, mazeOriginZ + 1));
+            RandomSource xEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ + blocksPerMaze));
+            RandomSource zEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + blocksPerMaze, 0, mazeOriginZ + 1));
+
+            Maze maze = new Maze(settings, structures, xRandom, zRandom, xEdgeRandom, zEdgeRandom);
+            chunkToMaze.put(key, maze);
+            return maze;
+        }
+        return chunkToMaze.get(key);
     }
 
     @Override
