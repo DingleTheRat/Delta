@@ -9,6 +9,7 @@ public class DeltaDataGeneration implements DataGeneratorEntrypoint {
     public void onInitializeDataGenerator(FabricDataGenerator fabricDataGenerator) {
         FabricDataGenerator.Pack pack = fabricDataGenerator.createPack();
 
-        pack.addProvider(DeltaModels::new);
+        pack.addProvider(DeltaModelProvider::new);
+        pack.addProvider(DeltaLabyrinthStructuresProvider::new);
     }
 }

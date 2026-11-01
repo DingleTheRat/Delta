@@ -7,8 +7,8 @@ import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.ModelTemplates;
 
-public class DeltaModels extends FabricModelProvider {
-    public DeltaModels(FabricPackOutput output) {
+public class DeltaModelProvider extends FabricModelProvider {
+    public DeltaModelProvider(FabricPackOutput output) {
         super(output);
     }
 
