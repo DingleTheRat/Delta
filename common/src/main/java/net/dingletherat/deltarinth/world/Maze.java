@@ -1,7 +1,13 @@
 package net.dingletherat.deltarinth.world;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import net.dingletherat.deltarinth.Delta;
 import net.minecraft.util.RandomSource;
 
 /**
@@ -9,11 +15,15 @@ import net.minecraft.util.RandomSource;
  */
 public class Maze {
 
-    protected record Settings(int cellsX, int cellsZ, int corridor, int wall, int turn_probability) {}
+    protected record Settings(int cellsX, int cellsZ, int corridor, int wall, int turn_probability, int structure_probability) {}
 
     // represents an integer ordered pair of x, z
-    private class Pair {
+    protected static class Pair {
         int x, z;
+        public static final Codec<Pair> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                        Codec.INT.fieldOf("x").forGetter(Pair::x),
+                        Codec.INT.fieldOf("z").forGetter(Pair::z)
+                    ).apply(instance, Pair::new));
 
         Pair(int x, int z) {
             this.x = x;
@@ -23,6 +33,17 @@ public class Maze {
         Pair plus(int x, int z) {
             return new Pair(this.x + x, this.z + z);
         }
+
+        Pair plus(Pair p) {
+            return new Pair(this.x + p.x, this.z + p.z);
+        }
+
+        Pair times(int co) {
+            return new Pair(this.x * co, this.z * co);
+        }
+
+        int x() { return x; }
+        int z() { return z; }
 
         @Override
         public String toString() {
@@ -35,6 +56,7 @@ public class Maze {
     private RandomSource zRandomSource;      // source for generating position of hole in left edge
     private RandomSource xEdgeRandomSource;  // source for generating position of hole in bottom edge
     private RandomSource zEdgeRandomSource;  // source for generating position of hole in right edge
+    private List<LabyrinthStructure> structures;
 
     private int cellsX;    // how many maze cells there are across the x-axis
     private int cellsZ;    // how many maze cells there are across the z-axis
@@ -44,18 +66,20 @@ public class Maze {
     private int wall;      // how many blocks wide is each wall
     private int shift;     // how many blocks to move over every time; corridor + wall
     private int turn_probability; // out of 100; if less than, then turn
+    private int structure_probability; // out of 100; if less than, then turn
 
     private int next = 0;   // the index of the next neighbour to go to
 
     Stack<Pair> stack = new Stack<>();
 
-    public Maze(Settings settings, RandomSource xRandomSource, RandomSource zRandomSource, RandomSource xEdgeRandomSource, RandomSource zEdgeRandomSource) {
+    public Maze(Settings settings, List<LabyrinthStructure> structures, RandomSource xRandomSource, RandomSource zRandomSource, RandomSource xEdgeRandomSource, RandomSource zEdgeRandomSource) {
         this.cellsX = settings.cellsX;
         this.cellsZ = settings.cellsZ;
         this.corridor = settings.corridor;
         this.wall = settings.wall;
         this.shift = corridor + wall;
         this.turn_probability = settings.turn_probability;
+        this.structure_probability = settings.structure_probability;
 
         this.width = shift * cellsX + wall;   // +wall to include both outer walls
         this.height = shift * cellsZ + wall;  // +wall to include both outer walls
@@ -65,6 +89,7 @@ public class Maze {
         this.zRandomSource = zRandomSource;
         this.xEdgeRandomSource = xEdgeRandomSource;
         this.zEdgeRandomSource = zEdgeRandomSource;
+        this.structures = structures;
 
         buildMaze();
     }
@@ -81,7 +106,7 @@ public class Maze {
         drawRect(edgeZ2, edgeZ2.plus(wall, corridor));
 
         stack.push(new Pair(wall, wall));  // start at top left
-        draw(stack.peek(), stack.peek());
+        draw(stack.peek(), stack.peek(), true);
 
         while (!stack.empty()) {
             forward();
@@ -89,8 +114,51 @@ public class Maze {
     }
 
     private void forward() {
+        // Generate structure
+        if (xRandomSource.nextInt(100) < structure_probability) {
+            LabyrinthStructure structure = structures.get(xRandomSource.nextInt(structures.size()));
+            Pair prev = stack.peek();
+            boolean valid = true;
+
+            for (Pair p : structure.cells()) {
+                if (p.x != 0 && p.z != 0) {
+                    Pair real = p.times(shift).plus(prev);
+                    if (!available(real.plus(0, shift))
+                            || !available(real.plus(shift, 0))
+                            || !available(real.plus(shift, shift))
+                            || !available(real)) { valid = false; break; }
+                }
+            }
+
+            if (valid) {
+                Pair real = prev;
+                for (Pair p : structure.cells()) {
+                    real = p.times(shift).plus(prev);
+                    Pair rectNext = real.plus(corridor, corridor);
+                    boolean xNeighbour = false;
+                    boolean zNeighbour = false;
+                    for (Pair test : structure.cells()) {
+                        if (test.x - p.x == 1 && !xNeighbour) {
+                            rectNext = rectNext.plus(wall, 0);
+                            xNeighbour = true;
+                        }
+                        if (test.z - p.z == 1 && !zNeighbour) {
+                            rectNext = rectNext.plus(0, wall);
+                            zNeighbour = true;
+                        }
+                        if (xNeighbour && zNeighbour) break;
+                    }
+                    drawRect(real, rectNext);
+                    if (xRandomSource.nextInt(100) < structure.stack_chance()) stack.push(real);
+                }
+                stack.push(real);
+                return;
+            }
+        }
+
         ArrayList<Pair> neighbours = new ArrayList<>(4);
 
+        // Go forward normally
         Pair prev = stack.peek();
         Pair check = prev.plus(shift, 0);
         if (available(check)) neighbours.add(check);
@@ -112,15 +180,15 @@ public class Maze {
             }
 
             stack.push(neighbours.get(next));
-            draw(prev, stack.peek());
+            draw(prev, stack.peek(), true);
         } else {
             Pair curr = stack.pop();
-            draw(curr, prev);
+            draw(curr, prev, true);
         }
     }
 
     // sets the corridor by corridor square with the corner at p to true
-    private void draw(Pair curr, Pair next) {
+    private void draw(Pair curr, Pair next, boolean to) {
         map[curr.x][curr.z] = true;
         if (curr.x != next.x) {
             // Horizontal corridor
@@ -130,7 +198,7 @@ public class Maze {
 
             for (int x = x1; x < x2; x++) {
                 for (int dz = 0; dz < corridor; dz++) {
-                    map[x][z + dz] = true;
+                    map[x][z + dz] = to;
                 }
             }
         } else {
@@ -141,15 +209,15 @@ public class Maze {
 
             for (int z = z1; z < z2; z++) {
                 for (int dx = 0; dx < corridor; dx++) {
-                    map[x + dx][z] = true;
+                    map[x + dx][z] = to;
                 }
             }
         }
     }
 
     private void drawRect(Pair p1, Pair p2) {
-        for (int x = Math.min(p1.x, p2.x); x < Math.max(p1.x, p2.x); x++) {
-            for (int z = Math.min(p1.z, p2.z); z < Math.max(p1.z, p2.z); z++) {
+        for (int x = Math.min(p1.x, p2.x); x < Math.max(p1.x, p2.x); x += 1) {
+            for (int z = Math.min(p1.z, p2.z); z < Math.max(p1.z, p2.z); z += 1) {
                 map[x][z] = true;
             }
         }

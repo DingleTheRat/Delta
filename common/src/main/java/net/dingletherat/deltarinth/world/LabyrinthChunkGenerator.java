@@ -35,8 +35,8 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
     List<LabyrinthStructure> structures;
 
     static final int WALL_HEIGHT = 16;
-    static final int blocksPerMaze = 16 * 6;
-    static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 90);
+    static final int blocksPerMaze = 16 * 9;
+    static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 90, 10);
 
     static PositionalRandomFactory randomFactory;
 
@@ -90,7 +90,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         RandomSource xEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ + blocksPerMaze));
         RandomSource zEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + blocksPerMaze, 0, mazeOriginZ + 1));
 
-        Maze maze = new Maze(settings, xRandom, zRandom, xEdgeRandom, zEdgeRandom);
+        Maze maze = new Maze(settings, structures, xRandom, zRandom, xEdgeRandom, zEdgeRandom);
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -126,7 +126,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         if (neighbours < 8) {
             chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
         } else {
-            chunk.setBlockState(pos, Blocks.QUARTZ_BRICKS.defaultBlockState());
+            chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
         }
     }
 
@@ -137,7 +137,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         for (int y = minY + 1; y < WALL_HEIGHT + 1; y++) {
             pos.set(x, y, z);
             if (neighbours == 5) {
-                chunk.setBlockState(pos, Blocks.QUARTZ_PILLAR.defaultBlockState());
+                chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
             } else {
                 chunk.setBlockState(pos, Blocks.STONE_BRICKS.defaultBlockState());
             }
