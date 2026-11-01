@@ -1,19 +1,18 @@
 package net.dingletherat.deltarinth.world;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dingletherat.deltarinth.Delta;
 import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -48,7 +47,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 public class LabyrinthChunkGenerator extends ChunkGenerator {
 
     List<LabyrinthStructure> structures;
-    ConcurrentHashMap<Maze.Pair, Maze> chunkToMaze = new ConcurrentHashMap<>();
+    Cache<Maze.Pair, Maze> chunkToMaze = CacheBuilder.newBuilder().maximumSize(128).build();
     PositionalRandomFactory randomFactory;
 
     static final int WALL_HEIGHT = 16;
@@ -206,7 +205,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         }
 
         Maze.Pair key = new Maze.Pair(mazeOriginX, mazeOriginZ);
-        if (!chunkToMaze.containsKey(key)) {
+        if (chunkToMaze.getIfPresent(key) == null) {
             RandomSource xRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ));
             RandomSource zRandom = randomFactory.at(new BlockPos(mazeOriginX, 0, mazeOriginZ + 1));
             RandomSource xEdgeRandom = randomFactory.at(new BlockPos(mazeOriginX + 1, 0, mazeOriginZ + blocksPerMaze));
@@ -216,7 +215,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
             chunkToMaze.put(key, maze);
             return maze;
         }
-        return chunkToMaze.get(key);
+        return chunkToMaze.getIfPresent(key);
     }
 
     @Override
