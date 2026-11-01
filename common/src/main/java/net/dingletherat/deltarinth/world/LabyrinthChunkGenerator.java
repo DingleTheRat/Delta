@@ -36,7 +36,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
 
     static final int WALL_HEIGHT = 16;
     static final int blocksPerMaze = 16 * 9;
-    static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 90, 10);
+    static final Maze.Settings settings = new Maze.Settings(blocksPerMaze / 6, blocksPerMaze / 6, 3, 3, 0.90, 0.10);
 
     static PositionalRandomFactory randomFactory;
 

@@ -15,7 +15,7 @@ import net.minecraft.util.RandomSource;
  */
 public class Maze {
 
-    protected record Settings(int cellsX, int cellsZ, int corridor, int wall, int turn_probability, int structure_probability) {}
+    protected record Settings(int cellsX, int cellsZ, int corridor, int wall, double turn_probability, double structure_probability) {}
 
     // represents an integer ordered pair of x, z
     protected static class Pair {
@@ -65,8 +65,8 @@ public class Maze {
     private int corridor;  // how many blocks wide is each corridor
     private int wall;      // how many blocks wide is each wall
     private int shift;     // how many blocks to move over every time; corridor + wall
-    private int turn_probability; // out of 100; if less than, then turn
-    private int structure_probability; // out of 100; if less than, then turn
+    private double turn_probability; // out of 1; if less than, then turn
+    private double structure_probability; // out of 1; if less than, then turn
 
     private int next = 0;   // the index of the next neighbour to go to
 
@@ -94,6 +94,10 @@ public class Maze {
         buildMaze();
     }
 
+    private boolean chance(double chance) {
+        return xRandomSource.nextDouble() < chance;
+    }
+
     private void buildMaze() {
         // draw the openings in the edges
         Pair edgeX1 = new Pair(xRandomSource.nextInt(cellsX) * shift + wall, 0);
@@ -115,7 +119,7 @@ public class Maze {
 
     private void forward() {
         // Generate structure
-        if (xRandomSource.nextInt(100) < structure_probability) {
+        if (chance(structure_probability)) {
             LabyrinthStructure structure = structures.get(xRandomSource.nextInt(structures.size()));
             Pair prev = stack.peek();
             boolean valid = true;
@@ -149,7 +153,7 @@ public class Maze {
                         if (xNeighbour && zNeighbour) break;
                     }
                     drawRect(real, rectNext);
-                    if (xRandomSource.nextInt(100) < structure.stack_chance()) stack.push(real);
+                    if (chance(structure.stack_chance())) stack.push(real);
                 }
                 stack.push(real);
                 return;
@@ -170,7 +174,7 @@ public class Maze {
         if (available(check)) neighbours.add(check);
 
         if (neighbours.size() > 0) {
-            if (next >= neighbours.size() || xRandomSource.nextInt(100) < turn_probability) {
+            if (next >= neighbours.size() || chance(turn_probability)) {
                 int old_next = next;
 
                 if (neighbours.size() > 1)
