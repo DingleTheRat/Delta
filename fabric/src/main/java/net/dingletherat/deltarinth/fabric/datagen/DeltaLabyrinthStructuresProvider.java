@@ -9,6 +9,9 @@ public class DeltaLabyrinthStructuresProvider extends LabyrinthStructuresProvide
 
     @Override
     void generateStructures(LabyrinthStructureGenerators generators) {
-        generators.register();
+        generators.generateSimple("test1", 0.25, 2, 2);
+        generators.generateSimple("test2", 0.25, 3, 3);
+        generators.generateSimple("test3", 0.25, 4, 5);
+        generators.generateSimple("test4", 0.25, 6, 6);
     }
 }

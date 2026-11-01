@@ -3,6 +3,8 @@ package net.dingletherat.deltarinth.fabric.datagen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.dingletherat.deltarinth.Delta;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
@@ -18,12 +20,28 @@ public abstract class LabyrinthStructuresProvider implements DataProvider {
             this.cache = cache;
         }
 
-        public void register() {
+        /**
+         * Generates a Delta labyrinth structure.
+         * @param exits a double from 0 to 1 on how many exits the structure should have.
+         * @param width how wide the structure rectangle should be - in how many corridors
+         * @param height how wide the structure rectangle should be - in how many corridors
+         **/
+        public void generateSimple(String name, double exits, int width, int height) {
             JsonObject json = new JsonObject();
-            json.addProperty("hello", "world");
+            json.addProperty("stack_chance", exits);
 
-            // Resolves to data/<modid>/custom/example.json
-            futures.add(DataProvider.saveStable(cache, json, pathProvider.json(Delta.id("example"))));
+            JsonArray cells = new JsonArray();
+            for (int x = 0; x < width; x++) {
+                for (int z = 0; z < height; z++) {
+                    JsonObject cell = new JsonObject();
+                    cell.addProperty("x", x);
+                    cell.addProperty("z", z);
+                    cells.add(cell);
+                }
+            }
+            json.add("cells", cells);
+
+            futures.add(DataProvider.saveStable(cache, json, pathProvider.json(Delta.id(name))));
         }
     }
 
@@ -31,7 +49,7 @@ public abstract class LabyrinthStructuresProvider implements DataProvider {
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
     public LabyrinthStructuresProvider(FabricPackOutput output) {
-        pathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "custom");
+        pathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, Delta.MOD_ID + "/labyrinth_structure");
     }
 
     abstract void generateStructures(LabyrinthStructureGenerators generators);
