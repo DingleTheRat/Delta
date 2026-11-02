@@ -11,6 +11,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dingletherat.deltarinth.Delta;
 import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
+import net.dingletherat.deltarinth.world.Maze.StructurePlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -175,16 +176,15 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         StructureTemplateManager templates = level.getLevel().getStructureTemplateManager();
 
         for (int i = 0; i < maze.getPlacedStructures().size(); i++) {
-            LabyrinthStructure s = maze.getPlacedStructures().get(i);
-            Maze.Pair p = maze.getPlacedStructurePositions().get(i);
-            Optional<StructureTemplate> opt = templates.get(Identifier.parse(s.location())); // ResourceLocation, e.g. deltarinth:labyrinth/room_a
+            StructurePlacement s = maze.getPlacedStructures().get(i);
+            Optional<StructureTemplate> opt = templates.get(Identifier.parse(s.structure().location()));
             if (opt.isEmpty()) continue;
             StructureTemplate template = opt.get();
 
             BlockPos origin = new BlockPos(
-                    mazeOriginX + p.x() - 1 + s.offset().x(),
+                    mazeOriginX + s.pos().x() - 1 + s.structure().offset().x(),
                     level.getMinY() + 2,           // adjust to sit on your floor
-                    mazeOriginZ + p.z() - 1 + s.offset().z());
+                    mazeOriginZ + s.pos().z() - 1 + s.structure().offset().z());
 
             StructurePlaceSettings settings = new StructurePlaceSettings()
                     .setBoundingBox(chunkBox)      // clips placement to this chunk

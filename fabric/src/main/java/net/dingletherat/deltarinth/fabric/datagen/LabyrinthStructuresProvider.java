@@ -25,7 +25,9 @@ public abstract class LabyrinthStructuresProvider implements DataProvider {
          * Generates a Delta labyrinth structure.
          * @param exits a double from 0 to 1 on how many exits the structure should have.
          * @param width how wide the structure rectangle should be - in how many corridors
-         * @param height how wide the structure rectangle should be - in how many corridors
+         * @param height how height the structure rectangle should be - in how many corridors
+         * @param offx how many blocks to move the structure over in x before placing it
+         * @param offz how many blocks to move the structure over in z before placing it
          **/
         public void generateSimple(String modid, String name, double exits, int width, int height, int offx, int offz) {
             JsonObject json = new JsonObject();

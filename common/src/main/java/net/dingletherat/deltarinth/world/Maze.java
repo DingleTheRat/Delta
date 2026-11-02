@@ -14,6 +14,8 @@ public class Maze {
 
     protected record Settings(int cellsX, int cellsZ, int corridor, int wall, double turn_probability, double structure_probability) {}
 
+    protected static record StructurePlacement(LabyrinthStructure structure, Pair pos) {}
+
     // represents an integer ordered pair of x, z
     protected static class Pair {
         int x, z;
@@ -80,8 +82,7 @@ public class Maze {
     private int next = 0;   // the index of the next neighbour to go to
 
     private Stack<Pair> stack = new Stack<>();
-    private List<LabyrinthStructure> placedStructures = new ArrayList<>();
-    private List<Pair> placedStructurePositions = new ArrayList<>();
+    private List<StructurePlacement> placedStructures = new ArrayList<>();
 
     public Maze(Settings settings, List<LabyrinthStructure> structures, RandomSource xRandomSource, RandomSource zRandomSource, RandomSource xEdgeRandomSource, RandomSource zEdgeRandomSource) {
         this.cellsX = settings.cellsX;
@@ -146,8 +147,7 @@ public class Maze {
             }
 
             if (valid) {
-                placedStructures.add(structure);
-                placedStructurePositions.add(prev);
+                placedStructures.add(new StructurePlacement(structure, prev));
                 Pair real = prev;
                 for (Pair p : structure.cells()) {
                     real = p.times(shift).plus(prev);
@@ -255,8 +255,7 @@ public class Maze {
     public int getHeight() { return height; }
     public int getCorridor() { return corridor; }
     public int getWall() { return wall; }
-    public List<LabyrinthStructure> getPlacedStructures() { return placedStructures; }
-    public List<Pair> getPlacedStructurePositions() { return placedStructurePositions; }
+    public List<StructurePlacement> getPlacedStructures() { return placedStructures; }
     public boolean getAt(int x, int z) {
         // return no wall if out of bounds
         if (x < 0 ||

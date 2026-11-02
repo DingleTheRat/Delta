@@ -9,18 +9,26 @@
       "z": 1
     },
     {
+      "x": 0,
+      "z": 2
+    },
+    {
       "x": 1,
       "z": 0
     },
     {
       "x": 1,
       "z": 1
+    },
+    {
+      "x": 1,
+      "z": 2
     }
   ],
   "location": "deltarinth:tall_tower",
   "offset": {
     "x": 1,
-    "z": 1
+    "z": 5
   },
   "stack_chance": 0.25
 }
