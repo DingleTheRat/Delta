@@ -3,6 +3,9 @@ package net.dingletherat.deltarinth.world;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+
+import org.spongepowered.asm.mixin.injection.invoke.arg.ArgumentIndexOutOfBoundsException;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.RandomSource;
@@ -14,7 +17,7 @@ public class Maze {
 
     protected record Settings(int cellsX, int cellsZ, int corridor, int wall, double turn_probability, double structure_probability) {}
 
-    protected static record StructurePlacement(LabyrinthStructure structure, Pair pos) {}
+    protected static record StructurePlacement(LabyrinthStructure structure, Pair pos, int rot) {}
 
     // represents an integer ordered pair of x, z
     protected static class Pair {
@@ -39,6 +42,23 @@ public class Maze {
 
         Pair times(int co) {
             return new Pair(this.x * co, this.z * co);
+        }
+
+        // angle 0-3 in 90-degree jumps clockwise
+        Pair rotate(Pair center, int angle) {
+            Pair u = new Pair(this.x - center.x, this.z - center.z);
+            switch (angle) {
+                case 0:
+                    return new Pair(u.x, u.z).plus(center);
+                case 1:
+                    return new Pair(u.z, -u.x).plus(center);
+                case 2:
+                    return new Pair(-u.x, -u.z).plus(center);
+                case 3:
+                    return new Pair(-u.z, u.x).plus(center);
+                default:
+                    throw new ArgumentIndexOutOfBoundsException(angle);
+            }
         }
 
         @Override
@@ -134,9 +154,19 @@ public class Maze {
         if (chance(structure_probability)) {
             LabyrinthStructure structure = structures.get(xRandomSource.nextInt(structures.size()));
             Pair prev = stack.peek();
+            // rotation centered on prev: 0-3, in 90 degree jumps clockwise
+            // currently unused
+            int rotation = xRandomSource.nextInt(4);
+
+            List<Pair> realCells = new ArrayList<>(structure.cells().size());
+            // can apply transformations like rotation later
+            for (Pair p : structure.cells()) {
+                realCells.add(p);
+            }
+
             boolean valid = true;
 
-            for (Pair p : structure.cells()) {
+            for (Pair p : realCells) {
                 if (p.x != 0 && p.z != 0) {
                     Pair real = p.times(shift).plus(prev);
                     if (!available(real.plus(0, shift))
@@ -147,14 +177,14 @@ public class Maze {
             }
 
             if (valid) {
-                placedStructures.add(new StructurePlacement(structure, prev));
+                placedStructures.add(new StructurePlacement(structure, prev, rotation));
                 Pair real = prev;
-                for (Pair p : structure.cells()) {
+                for (Pair p : realCells) {
                     real = p.times(shift).plus(prev);
                     Pair rectNext = real.plus(corridor, corridor);
                     boolean xNeighbour = false;
                     boolean zNeighbour = false;
-                    for (Pair test : structure.cells()) {
+                    for (Pair test : realCells) {
                         if (test.x - p.x == 1 && !xNeighbour) {
                             rectNext = rectNext.plus(wall, 0);
                             xNeighbour = true;

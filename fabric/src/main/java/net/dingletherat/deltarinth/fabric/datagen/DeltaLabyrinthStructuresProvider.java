@@ -13,6 +13,6 @@ public class DeltaLabyrinthStructuresProvider extends LabyrinthStructuresProvide
         generators.generateSimple(Delta.MOD_ID, "tall_tower",
                 0.25,
                 2, 3,
-                1, 5);
+                1, 1);
     }
 }

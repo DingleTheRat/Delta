@@ -15,11 +15,13 @@ import net.dingletherat.deltarinth.world.Maze.StructurePlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Rotations;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -183,7 +185,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
 
             BlockPos origin = new BlockPos(
                     mazeOriginX + s.pos().x() - 1 + s.structure().offset().x(),
-                    level.getMinY() + 2,           // adjust to sit on your floor
+                    level.getMinY() + 2,
                     mazeOriginZ + s.pos().z() - 1 + s.structure().offset().z());
 
             StructurePlaceSettings settings = new StructurePlaceSettings()
