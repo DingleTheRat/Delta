@@ -7,6 +7,6 @@ public final class DeltaRegistries {
         DeltaItems.ITEMS.register();
         DeltaTabs.TABS.register();
         DeltaBlocks.BLOCKS.register();
-        DeltaChunkGenerators.CHUNK_GENERATORS.register();
+        DeltaChunkGeneration.CHUNK_GENERATORS.register();
     }
 }

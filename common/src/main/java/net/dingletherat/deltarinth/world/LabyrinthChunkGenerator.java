@@ -10,7 +10,7 @@ import com.google.common.cache.CacheBuilder;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dingletherat.deltarinth.Delta;
-import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
+import net.dingletherat.deltarinth.registry.DeltaChunkGeneration;
 import net.dingletherat.deltarinth.world.Maze.StructurePlacement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -79,7 +79,7 @@ public class LabyrinthChunkGenerator extends ChunkGenerator {
         super.createStructures(registryAccess, state, structureManager, centerChunk, structureTemplateManager, level);
 
         if (structures == null) {
-            structures = registryAccess.lookupOrThrow(DeltaChunkGenerators.LABYRINTH_STRUCTURE).stream().toList();
+            structures = registryAccess.lookupOrThrow(DeltaChunkGeneration.LABYRINTH_STRUCTURE).stream().toList();
         }
     }
 

@@ -5,7 +5,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.registries.NewDatapackRegistryEvent;
 import net.dingletherat.deltarinth.Delta;
-import net.dingletherat.deltarinth.registry.DeltaChunkGenerators;
+import net.dingletherat.deltarinth.registry.DeltaChunkGeneration;
+import net.dingletherat.deltarinth.world.LabyrinthBiome;
 import net.dingletherat.deltarinth.world.LabyrinthStructure;
 
 @Mod(Delta.MOD_ID)
@@ -18,9 +19,8 @@ public final class DeltaNeoForge {
 
     @SubscribeEvent
     public static void registerDatapackRegistries(NewDatapackRegistryEvent event) {
-        event.worldRegistry(
-                DeltaChunkGenerators.LABYRINTH_STRUCTURE,
-                LabyrinthStructure.CODEC
-        );
+        // Registring a data type is platform-dependent, so we do it here.
+        event.worldRegistry(DeltaChunkGeneration.LABYRINTH_STRUCTURE, LabyrinthStructure.CODEC);
+        event.worldRegistry(DeltaChunkGeneration.LABYRINTH_BIOME, LabyrinthBiome.CODEC);
     }
 }

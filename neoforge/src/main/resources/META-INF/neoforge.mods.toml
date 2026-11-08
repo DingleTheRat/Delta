@@ -5,7 +5,7 @@ license = "GPL-3.0"
 
 [[mods]]
 modId = "deltarinth"
-version = "${version}"
+version = "1.0.0"#"${version}"
 displayName = "Delta"
 authors = "DingleTheRat, UsUsStudios"
 description = '''
